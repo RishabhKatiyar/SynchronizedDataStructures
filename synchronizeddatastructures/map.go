@@ -2,12 +2,8 @@
 
 package synchronizeddatastructures
 
-import (
-	"encoding/json"
-)
-
 type ReadResponse struct {
-	Result []byte
+	Result interface{}
 	Found  bool
 }
 
@@ -22,10 +18,8 @@ type UpdateObject struct {
 	Resp chan bool
 }
 
-// derived map can be map of maps so an operation must contain all the keys (nested)
-// e.g. [key1][key2]...Val
 type DeleteObject struct {
-	Key  []interface{}
+	Key  interface{}
 	Resp chan bool
 }
 
@@ -37,10 +31,9 @@ type DerivedMapContainer struct {
 }
 
 // use this method only when defining customRead method for NewSynchronizedMap
-func (c *DerivedMapContainer) ReadMap(key interface{}) ([]byte, bool) {
+func (c *DerivedMapContainer) ReadMap(key interface{}) (interface{}, bool) {
 	val, exists := c.DerivedMap[key]
-	response, _ := json.Marshal(val)
-	return response, exists
+	return val, exists
 }
 
 // use this method only when defining customUpdate method for NewSynchronizedMap

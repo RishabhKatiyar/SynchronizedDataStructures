@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"sync"
@@ -24,7 +23,7 @@ func simpleUpdate(derivedMapContainer *sds.DerivedMapContainer, updateOb *sds.Up
 
 // user defined delete
 func simpleDelete(derivedMapContainer *sds.DerivedMapContainer, deleteOb *sds.DeleteObject) {
-	derivedMapContainer.DeleteMap(deleteOb.Key[0].(string))
+	derivedMapContainer.DeleteMap(deleteOb.Key.([]string)[0])
 	deleteOb.Resp <- true
 }
 
@@ -63,8 +62,7 @@ func main() {
 			simpleMapContainer.ReadOperation <- readOb
 			response := <-readOb.Resp
 			if response.Found {
-				var val int
-				json.Unmarshal(response.Result, &val)
+				val := response.Result.(int)
 				fmt.Printf("Value for key %s is %d \n", strconv.Itoa(param), val)
 			}
 		}(i)
@@ -96,7 +94,7 @@ func main() {
 				// define object to be deleted
 				// pass the delete object to delete operation
 				// get response
-				deleteOb := sds.DeleteObject{Key: []interface{}{strconv.Itoa(param)}, Resp: make(chan bool)}
+				deleteOb := sds.DeleteObject{Key: []string{strconv.Itoa(param)}, Resp: make(chan bool)}
 				simpleMapContainer.DeleteOperation <- deleteOb
 				<-deleteOb.Resp
 			}
@@ -110,9 +108,8 @@ func main() {
 	readOb := sds.ReadObject{Key: key, Resp: make(chan sds.ReadResponse)}
 	simpleMapContainer.ReadOperation <- readOb
 	response := <-readOb.Resp
-	var val int
 	if response.Found {
-		json.Unmarshal(response.Result, &val)
+		val := response.Result.(int)
 		fmt.Printf("Value for key %s is %d \n", key, val)
 	} else {
 		fmt.Printf("Value for key %s not found \n", key)
@@ -125,7 +122,7 @@ func main() {
 	response = <-readOb.Resp
 
 	if response.Found {
-		json.Unmarshal(response.Result, &val)
+		val := response.Result.(int)
 		fmt.Printf("Value for key %s is %d \n", key, val)
 	} else {
 		fmt.Printf("Value for key %s not found \n", key)
