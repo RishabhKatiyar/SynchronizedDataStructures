@@ -2,14 +2,9 @@
 
 package synchronizeddatastructures
 
-type ReadResponse struct {
-	Result interface{}
-	Found  bool
-}
-
 type ReadObject struct {
 	Key  interface{}
-	Resp chan ReadResponse
+	Resp chan interface{}
 }
 
 type UpdateObject struct {
@@ -28,22 +23,6 @@ type DerivedMapContainer struct {
 	UpdateOperation chan UpdateObject
 	DeleteOperation chan DeleteObject
 	DerivedMap      map[interface{}]interface{}
-}
-
-// use this method only when defining customRead method for NewSynchronizedMap
-func (c *DerivedMapContainer) ReadMap(key interface{}) (interface{}, bool) {
-	val, exists := c.DerivedMap[key]
-	return val, exists
-}
-
-// use this method only when defining customUpdate method for NewSynchronizedMap
-func (c *DerivedMapContainer) UpdateMap(key interface{}, val interface{}) {
-	c.DerivedMap[key] = val
-}
-
-// use this method only when defining customerDelete method for NewSynchronizedMap
-func (c *DerivedMapContainer) DeleteMap(key interface{}) {
-	delete(c.DerivedMap, key)
 }
 
 type customRead func(derivedMapContainer *DerivedMapContainer, readOb *ReadObject)

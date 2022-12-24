@@ -8,44 +8,55 @@ import (
 	sds "github.com/RishabhKatiyar/SynchronizedDataStructures/synchronizeddatastructures"
 )
 
+type result struct {
+	Found bool
+	Val   interface{}
+}
+
 // user define read
 func simpleRead(derivedMapContainer *sds.DerivedMapContainer, readOb *sds.ReadObject) {
-	response, exists := derivedMapContainer.ReadMap(readOb.Key)
-	payload := sds.ReadResponse{Result: response, Found: exists}
+	//response, exists := derivedMapContainer.ReadMap(readOb.Key)
+	response, exists := derivedMapContainer.DerivedMap[readOb.Key]
+	payload := result{Val: response, Found: exists}
 	readOb.Resp <- payload
 }
 
 // user defined update
 func simpleUpdate(derivedMapContainer *sds.DerivedMapContainer, updateOb *sds.UpdateObject) {
-	derivedMapContainer.UpdateMap(updateOb.Key, updateOb.Val)
+	//derivedMapContainer.UpdateMap(updateOb.Key, updateOb.Val)
+	derivedMapContainer.DerivedMap[updateOb.Key] = updateOb.Val
 	updateOb.Resp <- true
 }
 
 // user defined delete
 func simpleDelete(derivedMapContainer *sds.DerivedMapContainer, deleteOb *sds.DeleteObject) {
-	derivedMapContainer.DeleteMap(deleteOb.Key.([]string)[0])
+	//derivedMapContainer.DeleteMap(deleteOb.Key.([]string)[0])
+	delete(derivedMapContainer.DerivedMap, deleteOb.Key.([]string)[0])
 	deleteOb.Resp <- true
 }
 
 // user define read
+
 func complexRead(derivedMapContainer *sds.DerivedMapContainer, readOb *sds.ReadObject) {
-	response, exists := derivedMapContainer.ReadMap(readOb.Key)
-	payload := sds.ReadResponse{Result: response, Found: exists}
+	response, exists := derivedMapContainer.DerivedMap[readOb.Key]
+	payload := result{Val: response, Found: exists}
 	readOb.Resp <- payload
 }
 
 // user defined update
+
 func complexUpdate(derivedMapContainer *sds.DerivedMapContainer, updateOb *sds.UpdateObject) {
-	derivedMapContainer.UpdateMap(updateOb.Key, updateOb.Val)
+	derivedMapContainer.DerivedMap[updateOb.Key] = updateOb.Val
 	updateOb.Resp <- true
 }
 
 // user defined delete
+
 func complexDelete(derivedMapContainer *sds.DerivedMapContainer, deleteOb *sds.DeleteObject) {
-	submap, exists := derivedMapContainer.ReadMap(deleteOb.Key.([]string)[0])
+	submap, exists := derivedMapContainer.DerivedMap[deleteOb.Key.([]string)[0]]
 	if exists {
 		delete(submap.(map[string]string), deleteOb.Key.([]string)[1])
-		derivedMapContainer.UpdateMap(deleteOb.Key.([]string)[0], submap)
+		derivedMapContainer.DerivedMap[deleteOb.Key.([]string)[0]] = submap
 	}
 
 	deleteOb.Resp <- true
@@ -82,11 +93,11 @@ func main() {
 			// define object to be read
 			// pass the read object to read operation
 			// get response
-			readOb := sds.ReadObject{Key: strconv.Itoa(param), Resp: make(chan sds.ReadResponse)}
+			readOb := sds.ReadObject{Key: strconv.Itoa(param), Resp: make(chan interface{})}
 			simpleMapContainer.ReadOperation <- readOb
 			response := <-readOb.Resp
-			if response.Found {
-				val := response.Result.(int)
+			if response.(result).Found {
+				val := response.(result).Val
 				fmt.Printf("Value for key %s is %d \n", strconv.Itoa(param), val)
 			}
 		}(i)
@@ -129,26 +140,29 @@ func main() {
 
 	// read key that is not present
 	key := "11"
-	readOb := sds.ReadObject{Key: key, Resp: make(chan sds.ReadResponse)}
+	readOb := sds.ReadObject{Key: key, Resp: make(chan interface{})}
 	simpleMapContainer.ReadOperation <- readOb
 	response := <-readOb.Resp
-	if response.Found {
-		val := response.Result.(int)
+
+	if response.(result).Found {
+		val := response.(result).Val
 		fmt.Printf("Value for key %s is %d \n", key, val)
 	} else {
+
 		fmt.Printf("Value for key %s not found \n", key)
 	}
 
 	// read key that is present
 	key = "4"
-	readOb = sds.ReadObject{Key: key, Resp: make(chan sds.ReadResponse)}
+	readOb = sds.ReadObject{Key: key, Resp: make(chan interface{})}
 	simpleMapContainer.ReadOperation <- readOb
 	response = <-readOb.Resp
 
-	if response.Found {
-		val := response.Result.(int)
+	if response.(result).Found {
+		val := response.(result).Val
 		fmt.Printf("Value for key %s is %d \n", key, val)
 	} else {
+
 		fmt.Printf("Value for key %s not found \n", key)
 	}
 
@@ -159,6 +173,7 @@ func main() {
 	complexMapContainer := sds.NewSynchronizedMap(complexRead, complexUpdate, complexDelete)
 
 	// Create
+
 	for i := 1; i <= 10; i++ {
 		wg.Add(1)
 		go func(param int) {
@@ -173,10 +188,12 @@ func main() {
 			<-updateOb.Resp
 		}(i)
 	}
+
 	wg.Wait()
 	fmt.Println("Created New Map :: ", complexMapContainer.DerivedMap)
 
 	// Read
+
 	for i := 1; i <= 10; i++ {
 		wg.Add(1)
 		go func(param int) {
@@ -184,18 +201,20 @@ func main() {
 			// define object to be read
 			// pass the read object to read operation
 			// get response
-			readOb := sds.ReadObject{Key: string(rune(param + 64)), Resp: make(chan sds.ReadResponse)}
+			readOb := sds.ReadObject{Key: string(rune(param + 64)), Resp: make(chan interface{})}
 			complexMapContainer.ReadOperation <- readOb
 			response := <-readOb.Resp
-			if response.Found {
-				val := response.Result.(map[string]string)
+			if response.(result).Found {
+				val := response.(result).Val.(map[string]string)
 				fmt.Printf("Value for key %s is %s \n", string(rune(param+64)), val)
 			}
 		}(i)
 	}
+
 	wg.Wait()
 
 	// Delete
+
 	for i := 1; i <= 10; i++ {
 		wg.Add(1)
 		go func(param int) {
@@ -210,8 +229,10 @@ func main() {
 			}
 		}(i)
 	}
+
 	wg.Wait()
 	fmt.Println("Deleted Odd Keys, Map :: ", complexMapContainer.DerivedMap)
 
 	//endregion
+
 }
