@@ -9,15 +9,15 @@ import (
 )
 
 type result struct {
-	Found bool
-	Val   interface{}
+	found bool
+	val   interface{}
 }
 
 // user define read
 func simpleRead(derivedMapContainer *sds.DerivedMapContainer, readOb *sds.ReadObject) {
 	//response, exists := derivedMapContainer.ReadMap(readOb.Key)
 	response, exists := derivedMapContainer.DerivedMap[readOb.Key]
-	payload := result{Val: response, Found: exists}
+	payload := result{val: response, found: exists}
 	readOb.Resp <- payload
 }
 
@@ -36,22 +36,19 @@ func simpleDelete(derivedMapContainer *sds.DerivedMapContainer, deleteOb *sds.De
 }
 
 // user define read
-
 func complexRead(derivedMapContainer *sds.DerivedMapContainer, readOb *sds.ReadObject) {
 	response, exists := derivedMapContainer.DerivedMap[readOb.Key]
-	payload := result{Val: response, Found: exists}
+	payload := result{val: response, found: exists}
 	readOb.Resp <- payload
 }
 
 // user defined update
-
 func complexUpdate(derivedMapContainer *sds.DerivedMapContainer, updateOb *sds.UpdateObject) {
 	derivedMapContainer.DerivedMap[updateOb.Key] = updateOb.Val
 	updateOb.Resp <- true
 }
 
 // user defined delete
-
 func complexDelete(derivedMapContainer *sds.DerivedMapContainer, deleteOb *sds.DeleteObject) {
 	submap, exists := derivedMapContainer.DerivedMap[deleteOb.Key.([]string)[0]]
 	if exists {
@@ -96,8 +93,8 @@ func main() {
 			readOb := sds.ReadObject{Key: strconv.Itoa(param), Resp: make(chan interface{})}
 			simpleMapContainer.ReadOperation <- readOb
 			response := <-readOb.Resp
-			if response.(result).Found {
-				val := response.(result).Val
+			if response.(result).found {
+				val := response.(result).val
 				fmt.Printf("Value for key %s is %d \n", strconv.Itoa(param), val)
 			}
 		}(i)
@@ -144,8 +141,8 @@ func main() {
 	simpleMapContainer.ReadOperation <- readOb
 	response := <-readOb.Resp
 
-	if response.(result).Found {
-		val := response.(result).Val
+	if response.(result).found {
+		val := response.(result).val
 		fmt.Printf("Value for key %s is %d \n", key, val)
 	} else {
 
@@ -158,8 +155,8 @@ func main() {
 	simpleMapContainer.ReadOperation <- readOb
 	response = <-readOb.Resp
 
-	if response.(result).Found {
-		val := response.(result).Val
+	if response.(result).found {
+		val := response.(result).val
 		fmt.Printf("Value for key %s is %d \n", key, val)
 	} else {
 
@@ -204,8 +201,8 @@ func main() {
 			readOb := sds.ReadObject{Key: string(rune(param + 64)), Resp: make(chan interface{})}
 			complexMapContainer.ReadOperation <- readOb
 			response := <-readOb.Resp
-			if response.(result).Found {
-				val := response.(result).Val.(map[string]string)
+			if response.(result).found {
+				val := response.(result).val.(map[string]string)
 				fmt.Printf("Value for key %s is %s \n", string(rune(param+64)), val)
 			}
 		}(i)
