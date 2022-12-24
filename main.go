@@ -15,7 +15,6 @@ type result struct {
 
 // user define read
 func simpleRead(derivedMapContainer *sds.DerivedMapContainer, readOb *sds.ReadObject) {
-	//response, exists := derivedMapContainer.ReadMap(readOb.Key)
 	response, exists := derivedMapContainer.DerivedMap[readOb.Key]
 	payload := result{val: response, found: exists}
 	readOb.Resp <- payload
@@ -23,14 +22,12 @@ func simpleRead(derivedMapContainer *sds.DerivedMapContainer, readOb *sds.ReadOb
 
 // user defined update
 func simpleUpdate(derivedMapContainer *sds.DerivedMapContainer, updateOb *sds.UpdateObject) {
-	//derivedMapContainer.UpdateMap(updateOb.Key, updateOb.Val)
 	derivedMapContainer.DerivedMap[updateOb.Key] = updateOb.Val
 	updateOb.Resp <- true
 }
 
 // user defined delete
 func simpleDelete(derivedMapContainer *sds.DerivedMapContainer, deleteOb *sds.DeleteObject) {
-	//derivedMapContainer.DeleteMap(deleteOb.Key.([]string)[0])
 	delete(derivedMapContainer.DerivedMap, deleteOb.Key.([]string)[0])
 	deleteOb.Resp <- true
 }
